@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  reverse-proxy:
+    container_name: ${COMPOSE_PROJECT_NAME}-reverse-proxy
+    build:
+      context: ./.docker/reverse-proxy
+      dockerfile: Dockerfile
+    volumes:
+       - ./.docker/reverse-proxy/sites-enabled:/etc/nginx/sites-enabled:ro
+       - ./.docker/reverse-proxy/snippets:/etc/nginx/snippets:ro
+       - ./.docker/reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+       - ./.docker/reverse-proxy/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "443:443"
+      - "80:80"
+    networks:
+      - main
+    depends_on:
+      - app
+
+  app:
+    container_name: ${COMPOSE_PROJECT_NAME}-app
+    build:
+      dockerfile: ./.docker/app/Dockerfile
+      target: app
+    environment:
+      - TZ=${APP_TIMEZONE}
+    volumes:
+      - ./:/var/www/html
+    links:
+      - db
+    hostname: app
+    ports:
+      - "8000:8000"
+    networks:
+      - main
+    restart: unless-stopped
+    depends_on:
+      composer:
+        condition: service_completed_successfully
+
+  composer:
+    container_name: ${COMPOSE_PROJECT_NAME}-composer
+    build:
+      dockerfile: ./.docker/app/Dockerfile
+      target: composer
+    environment:
+      - TZ=${APP_TIMEZONE}
+    volumes:
+      - ./:/var/www/html
+
+  db:
+    container_name: ${COMPOSE_PROJECT_NAME}-db
+    build:
+      dockerfile: ./.docker/db/Dockerfile
+    restart: unless-stopped
+    environment:
+      - TZ=${APP_TIMEZONE}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=no
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+    volumes:
+      - ./.docker/db/mysql:/var/lib/mysql
+      - ./.docker/db/sql:/docker-entrypoint-initdb.d
+      - ./.docker/db/my.cnf:/etc/mysql/my.cnf
+    hostname: db
+    ports:
+      - "3306:3306"
+    networks:
+      - main
+
+networks:
+  main:
+    name: ${COMPOSE_PROJECT_NAME}-main

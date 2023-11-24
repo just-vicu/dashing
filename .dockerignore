@@ -1,0 +1,21 @@
+# Excluded files
+/.idea
+/.vscode
+/.git
+/.docker/db/mysql
+/public/storage
+/bootstrap/cache/*
+/storage/app/*
+/storage/framework/views/*
+/storage/logs/*
+/tests
+/vendor
+.dockerignore
+.editorconfig
+.env.*
+.editorconfig
+.gitattributes
+.gitignore
+docker-compose.*.yml
+docker-compose.yml
+Makefile
