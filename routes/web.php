@@ -16,3 +16,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::group([
+    'controller' => \App\Http\Controllers\LoanController::class,
+    'prefix' => 'loan'
+], function () {
+    Route::get('/', 'index');
+    Route::get('/schedule', 'schedule');
+});
